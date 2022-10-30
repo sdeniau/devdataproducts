@@ -35,7 +35,7 @@ ufo <- ufodata %>% select(Date_time, UFO_shape, country, latitude, longitude, ci
 
 - The **Shiny App** is to be found here https://sdeniau.shinyapps.io/UFOlogy/
 
-- The *Rmd* file used to do this presentation is to be find there https://github.com/sdeniau/devdataproducts/prezufology.rmd
+- The *Rmd* file used to do this presentation is to be find there https://github.com/sdeniau/devdataproducts/prezufology.Rmd
 
 ## Calculation
 
