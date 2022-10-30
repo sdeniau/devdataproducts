@@ -1,0 +1,103 @@
+---
+title: "UFOlogy - UFOs' observations in UK from 1974 to 2014"
+author: "Sylvain Deniau"
+date: "30/10/2022"
+output: slidy_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Presentation & data used
+
+The main objective of this application is to show the location and type of different ufological phenomena that have been observed in the United Kingdom from 1974 to 2014.
+
+The original dataset (https://www.kaggle.com/datasets/camnugent/ufo-sightings-around-the-world) does contain over 80,000 worldwide records of UFO sightings dating back as far as 1949 with  latitude and longitude data, dates, duration and description of the phenomenom.
+
+`global.R` download the global dataset and provide some treatment in order to filter the data in particuliar to select location (i.e. UK) and extract year from Date_time variable.
+
+```{r eval = FALSE, echo=TRUE}
+ufo <- ufodata %>% select(Date_time, UFO_shape, country, latitude, longitude, city) %>%
+        filter(country=="gb") %>% 
+        filter(!is.na(Date_time)&!is.na(UFO_shape)&!is.na(latitude)&!is.na(longitude)) %>% 
+        filter(UFO_shape!=""&latitude!=""&longitude!="") %>% 
+        mutate(time=year(mdy_hm(Date_time)),latitude=as.numeric(latitude)) %>%
+        mutate(city=str_to_title(city)) %>% 
+        filter(!is.na(latitude)) %>% select(-Date_time)
+```
+
+
+
+## Location of the various files
+
+- `global.R`, `ui.R` and `server.R` can be found there https://github.com/sdeniau/devdataproducts
+
+- The **Shiny App** is to be found here https://sdeniau.shinyapps.io/UFOlogy/
+
+- The *Rmd* file used to do this presentation is to be find there https://github.com/sdeniau/devdataproducts/prezufology.rmd
+
+## Calculation
+
+Calculation done in `server.R` are simple.
+
+On the one side it filter the data set with the selected year and create a Leaflet output 
+```{r ,echo = TRUE, eval=FALSE}
+
+output$ufomap <- renderLeaflet({
+        ufoselect <- ufo %>% filter(time==input$year)
+        ufoselect %>% 
+            leaflet() %>%
+            addTiles() %>%
+            addMarkers(lat=~latitude, lng=~longitude, label=~city)
+
+    })
+
+```
+
+On the other side it filter the data set with the selected year and calculate the number of UFOs' observation per shape, sort them in a descending order and create a Table output
+
+```{r ,echo = TRUE, eval=FALSE}
+
+ output$ufotable <- renderTable({
+            ufotable <- ufo %>% filter(time==input$year) %>% 
+                    group_by(UFO_shape) %>% summarise (nb=n()) %>% 
+                    arrange(desc(nb))
+            ufotable
+    })
+
+```
+
+## Illustration 
+
+For example for the year 1995 the map will look like:
+
+
+```{r message = FALSE, warning = FALSE}
+        
+library(tidyverse)
+library(lubridate)
+library(leaflet)
+library(shiny)
+library(shinyhelper)
+
+
+id <- "1cTekOyvQa0sRKp9IChFW232N67hFidAm"
+ufodata <- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", id))
+
+
+ufo <- ufodata %>% select(Date_time, UFO_shape, country, latitude, longitude, city) %>%
+        filter(country=="gb") %>% 
+        filter(!is.na(Date_time)&!is.na(UFO_shape)&!is.na(latitude)&!is.na(longitude)) %>% 
+        filter(UFO_shape!=""&latitude!=""&longitude!="") %>% 
+        mutate(time=year(mdy_hm(Date_time)),latitude=as.numeric(latitude)) %>%
+        mutate(city=str_to_title(city)) %>% 
+        filter(!is.na(latitude)) %>% select(-Date_time) 
+
+ufoselect <- ufo %>% filter(time==1995)
+        ufoselect %>% 
+            leaflet() %>%
+            addTiles() %>%
+            addMarkers(lat=~latitude, lng=~longitude, label=~city)
+```
+
